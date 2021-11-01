@@ -1,53 +1,7 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 
 LCD_HandleTypeDef hlcd;
 
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
@@ -55,47 +9,20 @@ static void MX_LCD_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void TIM6_init(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
+struct Flags Systems_f = {0x00};
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_LCD_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
+  TIM6_init();
 
   BSP_LCD_GLASS_Clear();
 
@@ -114,9 +41,33 @@ int main(void)
   BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
   BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
 
+  TIM6 -> CR1 |= TIM_CR1_CEN;
+
   while (1)
   {
+	  if(Systems_f.DMA_ADC_f != RESET)				//		ADC data is ready: checking condition
+	  {
+		  Systems_f.DMA_ADC_f = RESET;
+	  }
 
+	  switch (Systems_f.Joystick_f)
+	  {
+		case UP:
+			Systems_f.Joystick_f = RESET;
+			break;
+
+		case DOWN:
+			Systems_f.Joystick_f = RESET;
+			break;
+
+		case RIGHT:
+			Systems_f.Joystick_f = RESET;
+			break;
+
+		default:
+			Systems_f.Joystick_f = RESET;
+			break;
+	}
 
 
   }
@@ -412,7 +363,6 @@ static void TIM6_init(void)
 	TIM6 -> ARR |= (1000  << TIM_ARR_ARR_Pos);
 	TIM6 -> CNT |= (1     << TIM_CNT_CNT_Pos);
 	TIM6 -> CR2 |= TIM_CR2_MMS2_1;
-	TIM6 -> CR1 |= TIM_CR1_CEN;
 }
 
 
@@ -460,31 +410,39 @@ static void MX_GPIO_Init(void)
   EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_14;
+  EXTI_InitStruct.LineCommand = ENABLE;
+  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+  LL_EXTI_Init(&EXTI_InitStruct);
+
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_15;
+  EXTI_InitStruct.LineCommand = ENABLE;
+  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+  LL_EXTI_Init(&EXTI_InitStruct);
+
   /**/
   LL_GPIO_SetPinPull(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin, LL_GPIO_PULL_NO);
-
-  /**/
   LL_GPIO_SetPinMode(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(JOY_UP_RIGHT_GPIO_Port, JOY_UP_Pin, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinMode(JOY_UP_RIGHT_GPIO_Port, JOY_UP_Pin, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(JOY_UP_RIGHT_GPIO_Port, JOY_RIGHT_Pin, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinMode(JOY_UP_RIGHT_GPIO_Port, JOY_RIGHT_Pin, LL_GPIO_MODE_INPUT);
 
+  NVIC_SetPriority(EXTI9_5_IRQn, 0x00);
+  NVIC_SetPriority(EXTI15_10_IRQn, 0x00);
+  NVIC_EnableIRQ(EXTI9_5_IRQn);
+  NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-/* USER CODE BEGIN 4 */
 
-/* USER CODE END 4 */
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+  {  }
 }
 
 #ifdef  USE_FULL_ASSERT
