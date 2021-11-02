@@ -2,8 +2,9 @@
 #include "stm32l4xx_it.h"
 
 
-
 extern struct Flags Systems_f;
+extern uint16_t DMA_ADC_buffer[];
+
 
 
 void DMA1_Channel1_IRQHandler(void)
@@ -33,6 +34,7 @@ void EXTI15_10_IRQHandler(void)
 	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15))
 	{
 		Systems_f.Joystick_f = RIGHT;
+
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
 	}
 

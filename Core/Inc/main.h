@@ -42,6 +42,12 @@ void Error_Handler(void);
 #define DOWN 		0x02
 #define RIGHT 		0x03
 
+#define PWM			0x04
+#define U_IN		0x05
+#define I_IN		0x06
+#define P_IN		0x07
+
+
 
 #ifdef __cplusplus
 }

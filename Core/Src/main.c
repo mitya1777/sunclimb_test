@@ -4,13 +4,34 @@ LCD_HandleTypeDef hlcd;
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
+//static void MX_DMA_Init(void);
 static void MX_LCD_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void TIM6_init(void);
+static void DMA_init(void);
 
-struct Flags Systems_f = {0x00};
+static void calculaion(void);
+static void LCD_depiction(uint8_t info_to_output);
+
+struct Flags Systems_f = {RESET};
+static uint16_t DMA_ADC_buffer[2] = {RESET};
+static float Uin, U2, Iin, Pin = RESET;
+static float Rsh = 0.1;
+
+static float duty_cycle, dc_d, dc_u, dc_f = RESET;
+static float Uin_u, Uin_f1, Uin_f2 = RESET;
+static float Iin_u, Iin_f1, Iin_f2 = RESET;
+static float Pin_u, Pin_f1, Pin_f2 = RESET;
+
+static uint8_t anchor = RESET;
+
+
+//					0	 1	  2	   3    4    5    6    7    8
+char letters[9] = {'P', 'W', 'M', '8', 'U', 'I', 'P', 'i', 'n'};
+
+static uint8_t button_up, button_down = RESET;
+static uint8_t button_right = 0x03;
 
 int main(void)
 {
@@ -18,7 +39,8 @@ int main(void)
   SystemClock_Config();
 
   MX_GPIO_Init();
-  MX_DMA_Init();
+  DMA_init();
+  //  MX_DMA_Init();
   MX_LCD_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
@@ -31,15 +53,13 @@ int main(void)
   BSP_LCD_GLASS_DisplayBar(LCD_BAR_2);
   BSP_LCD_GLASS_DisplayBar(LCD_BAR_3);
 
-  char letter[4] = {'P', 'W', 'M', '8'};
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[1]), POINT_OFF, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_2);
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[2]), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_3);
 
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[1]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_3);
-
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letter[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
 
   TIM6 -> CR1 |= TIM_CR1_CEN;
 
@@ -47,20 +67,54 @@ int main(void)
   {
 	  if(Systems_f.DMA_ADC_f != RESET)				//		ADC data is ready: checking condition
 	  {
+		  calculaion();	  	  	  	  	  	  	  	//		Power and current calculation
 		  Systems_f.DMA_ADC_f = RESET;
+		  LCD_depiction(anchor);
 	  }
 
 	  switch (Systems_f.Joystick_f)
 	  {
 		case UP:
+			duty_cycle += 0.25;
+			if(duty_cycle >= 100)
+			{
+				duty_cycle = 100;
+			}
+			TIM1 -> ARR = duty_cycle * 4;
+
+			if(button_right == PWM)
+			{
+				LCD_depiction(PWM);
+			}
+
 			Systems_f.Joystick_f = RESET;
 			break;
 
 		case DOWN:
+			duty_cycle -= 0.25;
+			if(duty_cycle <= 1)
+			{
+				duty_cycle = 1;
+			}
+			TIM1 -> ARR = duty_cycle * 4;
+
+			if(button_right == PWM)
+			{
+				LCD_depiction(PWM);
+			}
+
 			Systems_f.Joystick_f = RESET;
 			break;
 
 		case RIGHT:
+			button_right ++;
+			if(button_right >= P_IN)
+			{
+				button_right = PWM;
+			}
+
+			LCD_depiction(button_right);
+
 			Systems_f.Joystick_f = RESET;
 			break;
 
@@ -68,11 +122,89 @@ int main(void)
 			Systems_f.Joystick_f = RESET;
 			break;
 	}
-
-
   }
-  /* USER CODE END 3 */
 }
+
+
+
+static void calculaion(void)
+{
+	Uin = 3.0 * DMA_ADC_buffer[0]/4096;
+	U2 = 3.0 * DMA_ADC_buffer[1]/4096;
+	Iin = (Uin - U2) / Rsh;
+	Pin = Uin * Iin;
+}
+
+
+static void LCD_depiction(uint8_t info_to_output)
+{
+	anchor = info_to_output;
+	switch (info_to_output)
+	{
+		case PWM:
+			if(duty_cycle >= 10)
+			{
+				dc_d = (uint8_t) duty_cycle / 10;
+				dc_u = (uint8_t) duty_cycle % 10;
+				dc_f = (uint8_t) (duty_cycle * 10) % 10;
+			}
+			else
+			{
+				dc_u = (uint8_t) duty_cycle;
+				dc_f = (uint8_t) (duty_cycle * 10) % 10;
+			}
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[1]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[2]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_d), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_f), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			break;
+
+		case U_IN:
+			Uin_u = (uint8_t) Uin;
+			Uin_f1 = (uint8_t) (Uin_f1 * 10) % 10;
+			Uin_f2 = (uint8_t) (Uin_f2 * 100) % 10;
+
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			break;
+
+		case I_IN:
+			Iin_u = (uint8_t) Iin;
+			Iin_f1 = (uint8_t) (Iin_f1 * 10) % 10;
+			Iin_f2 = (uint8_t) (Iin_f2 * 100) % 10;
+
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[5]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			break;
+
+		case P_IN:
+			Pin_u = (uint8_t) Pin;
+			Pin_f1 = (uint8_t) (Pin_f1 * 10) % 10;
+			Pin_f2 = (uint8_t) (Pin_f2 * 100) % 10;
+
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[6]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			break;
+
+		default:
+			break;
+	}
+}
+
 
 /**
   * @brief System Clock Configuration
@@ -233,10 +365,9 @@ static void MX_ADC1_Init(void)
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_6);
   LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_6, LL_ADC_SAMPLINGTIME_640CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_6, LL_ADC_SINGLE_ENDED);
-  /* USER CODE BEGIN ADC1_Init 2 */
 
-  /* USER CODE END ADC1_Init 2 */
-
+  ADC1 -> CR |= ADC_CR_ADEN;
+  ADC1 -> CR |= ADC_CR_ADSTART;
 }
 
 /**
@@ -369,19 +500,40 @@ static void TIM6_init(void)
 /**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void)
+//static void MX_DMA_Init(void)
+//{
+//
+//  /* Init with LL driver */
+//  /* DMA controller clock enable */
+//  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+//
+//  /* DMA interrupt init */
+//  /* DMA1_Channel1_IRQn interrupt configuration */
+//  NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+//  NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+//
+//}
+
+
+static void DMA_init(void)
 {
+	NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
-  /* Init with LL driver */
-  /* DMA controller clock enable */
-  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-  NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
+	ADC1 -> CFGR |= ADC_CFGR_DMAEN;											//	enable DMA on ADC
+	ADC1 -> CFGR |= ADC_CFGR_DMACFG;										//	circular DMA mode configuration
+	DMA1_Channel1-> CPAR = (uint32_t) (&(ADC1 -> DR));						//	peripheral address setting (ADC1_DR register pointer)
+	DMA1_Channel1 -> CMAR = (uint32_t) (&DMA_ADC_buffer);					//	memory address setting (ADC_DMA_buffer)
+	DMA1_Channel1 -> CNDTR = 0x02;											//	total data to be transferred number configuration
+	DMA1_Channel1 -> CCR &= ~(DMA_CCR_PL_0 | DMA_CCR_PL_1);					//	channel low priority configuration
+	DMA1_Channel1 -> CCR &= ~(DMA_CCR_DIR | DMA_CCR_PINC);					//	data transfer direction and peripheral pointer increment configuration
+	DMA1_Channel1 -> CCR |= DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0; 				//	16 bit memory and peripheral size configuration
+	DMA1_Channel1 -> CCR |= DMA_CCR_MINC;									//	memory address pointer increment configuration
+	DMA1_Channel1 -> CCR |= DMA_CCR_CIRC;									//	circular mode configuration
+	DMA1_Channel1 -> CCR |= DMA_CCR_TCIE;									//	transfer complete interrupt enable
+	DMA2_Channel1 -> CCR |= DMA_CCR_EN;
 }
+
 
 /**
   * @brief GPIO Initialization Function
