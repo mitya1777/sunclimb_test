@@ -10,9 +10,19 @@ extern uint16_t DMA_ADC_buffer[];
 void DMA1_Channel1_IRQHandler(void)
 {
 	Systems_f.DMA_ADC_f = SET;
+	GPIOE-> ODR ^= (GPIO_ODR_OD8);
 	DMA1 -> IFCR |= DMA_IFCR_CTCIF1;
 }
 
+
+void EXTI2_IRQHandler(void)
+{
+	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2))
+	{
+		Systems_f.Joystick_f = RIGHT;
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
+	}
+}
 
 void EXTI9_5_IRQHandler(void)
 {
@@ -25,23 +35,20 @@ void EXTI9_5_IRQHandler(void)
 
 void EXTI15_10_IRQHandler(void)
 {
-	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_14))
-	{
-		Systems_f.Joystick_f = UP;
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_14);
-	}
-
 	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15))
 	{
-		Systems_f.Joystick_f = RIGHT;
+		Systems_f.Joystick_f = UP;
 
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
 	}
 
-	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_10);
-	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_11);
-	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
-	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+	else
+	{
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_10);
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_11);
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+	}
 }
 
 

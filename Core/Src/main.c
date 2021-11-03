@@ -5,7 +5,6 @@ LCD_HandleTypeDef hlcd;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 //static void MX_DMA_Init(void);
-static void MX_LCD_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void TIM6_init(void);
@@ -40,8 +39,8 @@ int main(void)
 
   MX_GPIO_Init();
   DMA_init();
-  //  MX_DMA_Init();
-  MX_LCD_Init();
+  BSP_LCD_GLASS_Init();
+//  MX_DMA_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
   TIM6_init();
@@ -80,7 +79,7 @@ int main(void)
 			{
 				duty_cycle = 100;
 			}
-			TIM1 -> ARR = duty_cycle * 4;
+			TIM1 -> CCR2 = duty_cycle * 4;
 
 			if(button_right == PWM)
 			{
@@ -96,7 +95,7 @@ int main(void)
 			{
 				duty_cycle = 1;
 			}
-			TIM1 -> ARR = duty_cycle * 4;
+			TIM1 -> CCR2 = duty_cycle * 4;
 
 			if(button_right == PWM)
 			{
@@ -370,43 +369,6 @@ static void MX_ADC1_Init(void)
   ADC1 -> CR |= ADC_CR_ADSTART;
 }
 
-/**
-  * @brief LCD Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_LCD_Init(void)
-{
-
-  /* USER CODE BEGIN LCD_Init 0 */
-
-  /* USER CODE END LCD_Init 0 */
-
-  /* USER CODE BEGIN LCD_Init 1 */
-
-  /* USER CODE END LCD_Init 1 */
-  hlcd.Instance = LCD;
-  hlcd.Init.Prescaler = LCD_PRESCALER_1;
-  hlcd.Init.Divider = LCD_DIVIDER_16;
-  hlcd.Init.Duty = LCD_DUTY_1_8;
-  hlcd.Init.Bias = LCD_BIAS_1_4;
-  hlcd.Init.VoltageSource = LCD_VOLTAGESOURCE_INTERNAL;
-  hlcd.Init.Contrast = LCD_CONTRASTLEVEL_0;
-  hlcd.Init.DeadTime = LCD_DEADTIME_0;
-  hlcd.Init.PulseOnDuration = LCD_PULSEONDURATION_0;
-  hlcd.Init.MuxSegment = LCD_MUXSEGMENT_DISABLE;
-  hlcd.Init.BlinkMode = LCD_BLINKMODE_OFF;
-  hlcd.Init.BlinkFrequency = LCD_BLINKFREQUENCY_DIV8;
-  hlcd.Init.HighDrive = LCD_HIGHDRIVE_DISABLE;
-  if (HAL_LCD_Init(&hlcd) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN LCD_Init 2 */
-
-  /* USER CODE END LCD_Init 2 */
-
-}
 
 /**
   * @brief TIM1 Initialization Function
@@ -553,6 +515,8 @@ static void MX_GPIO_Init(void)
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE5);
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE2);
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE15);
 
   /**/
   EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_5;
@@ -562,7 +526,7 @@ static void MX_GPIO_Init(void)
   EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
-  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_14;
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_2;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
   EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
@@ -575,19 +539,29 @@ static void MX_GPIO_Init(void)
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
-  LL_GPIO_SetPinPull(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin, LL_GPIO_PULL_NO);
-  LL_GPIO_SetPinMode(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin, LL_GPIO_MODE_INPUT);
-  LL_GPIO_SetPinPull(JOY_UP_RIGHT_GPIO_Port, JOY_UP_Pin, LL_GPIO_PULL_NO);
-  LL_GPIO_SetPinMode(JOY_UP_RIGHT_GPIO_Port, JOY_UP_Pin, LL_GPIO_MODE_INPUT);
-  LL_GPIO_SetPinPull(JOY_UP_RIGHT_GPIO_Port, JOY_RIGHT_Pin, LL_GPIO_PULL_NO);
-  LL_GPIO_SetPinMode(JOY_UP_RIGHT_GPIO_Port, JOY_RIGHT_Pin, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_5, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_15, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_15, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_2, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_2, LL_GPIO_MODE_INPUT);
 
+  GPIOE-> MODER &= ~(GPIO_MODER_MODE8);	//	Zeroing mode register
+  GPIOE-> MODER |= (GPIO_MODER_MODE8_0);	// Setting desired mode of port
+  GPIOE-> OTYPER &= ~(GPIO_OTYPER_OT_8);	// Zeroing mode register
+  GPIOE-> OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR8);	//	Zeroing speed register
+  GPIOE-> OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR8_0 | GPIO_OSPEEDER_OSPEEDR8_1);	// Setting desired speed of port`s clock cycles
+  GPIOE-> PUPDR &= ~(GPIO_PUPDR_PUPD8);	// Zeroing pull(up/down) register
+
+  GPIOE-> ODR &= ~(GPIO_ODR_OD8);	// Set "Off" desired pin of port
+
+  NVIC_SetPriority(EXTI2_IRQn, 0x00);
   NVIC_SetPriority(EXTI9_5_IRQn, 0x00);
   NVIC_SetPriority(EXTI15_10_IRQn, 0x00);
+  NVIC_EnableIRQ(EXTI2_IRQn);
   NVIC_EnableIRQ(EXTI9_5_IRQn);
   NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
-
 
 
 void Error_Handler(void)

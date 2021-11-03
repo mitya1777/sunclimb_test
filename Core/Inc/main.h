@@ -32,11 +32,12 @@ struct Flags {
 void Error_Handler(void);
 
 #define JOY_DOWN_Pin LL_GPIO_PIN_5
-#define JOY_UP_Pin LL_GPIO_PIN_14
-#define JOY_RIGHT_Pin LL_GPIO_PIN_14
+#define JOY_UP_Pin LL_GPIO_PIN_15
+#define JOY_RIGHT_Pin LL_GPIO_PIN_2
 
 #define JOY_DOWN_GPIO_Port GPIOA
-#define JOY_UP_RIGHT_GPIO_Port GPIOC
+#define JOY_RIGHT_GPIO_Port GPIOB
+#define JOY_UP_GPIO_Port GPIOC
 
 #define UP 			0x01
 #define DOWN 		0x02
