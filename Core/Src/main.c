@@ -12,22 +12,24 @@ static void DMA_init(void);
 
 static void calculaion(void);
 static void LCD_depiction(uint8_t info_to_output);
+static char convert_digit_to_ascii (uint8_t);
 
 struct Flags Systems_f = {RESET};
 static uint16_t DMA_ADC_buffer[2] = {RESET};
 static float Uin, U2, Iin, Pin = RESET;
 static float Rsh = 0.1;
 
-static float duty_cycle, dc_d, dc_u, dc_f = RESET;
-static float Uin_u, Uin_f1, Uin_f2 = RESET;
-static float Iin_u, Iin_f1, Iin_f2 = RESET;
-static float Pin_u, Pin_f1, Pin_f2 = RESET;
+static float duty_cycle = RESET;
+static char dc_d, dc_u, dc_f = RESET;
+static char Uin_u, Uin_f1, Uin_f2 = RESET;
+static char  Iin_u, Iin_f1, Iin_f2 = RESET;
+static char Pin_u, Pin_f1, Pin_f2 = RESET;
 
 static uint8_t anchor = RESET;
 
 
-//					0	 1	  2	   3    4    5    6    7    8
 char letters[9] = {'P', 'W', 'M', '8', 'U', 'I', 'P', 'i', 'n'};
+char digits[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
 static uint8_t button_up, button_down = RESET;
 static uint8_t button_right = 0x03;
@@ -46,19 +48,7 @@ int main(void)
   TIM6_init();
 
   BSP_LCD_GLASS_Clear();
-
-  BSP_LCD_GLASS_DisplayBar(LCD_BAR_0);
-  BSP_LCD_GLASS_DisplayBar(LCD_BAR_1);
-  BSP_LCD_GLASS_DisplayBar(LCD_BAR_2);
-  BSP_LCD_GLASS_DisplayBar(LCD_BAR_3);
-
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[1]), POINT_OFF, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_2);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[2]), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_3);
-
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-  BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[3]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+  Systems_f.Joystick_f = 0x03;
 
   TIM6 -> CR1 |= TIM_CR1_CEN;
 
@@ -75,9 +65,9 @@ int main(void)
 	  {
 		case UP:
 			duty_cycle += 0.25;
-			if(duty_cycle >= 100)
+			if(duty_cycle >= 99.75)
 			{
-				duty_cycle = 100;
+				duty_cycle = 99.75;
 			}
 			TIM1 -> CCR2 = duty_cycle * 4;
 
@@ -107,7 +97,7 @@ int main(void)
 
 		case RIGHT:
 			button_right ++;
-			if(button_right >= P_IN)
+			if(button_right > P_IN)
 			{
 				button_right = PWM;
 			}
@@ -137,71 +127,85 @@ static void calculaion(void)
 
 static void LCD_depiction(uint8_t info_to_output)
 {
+	BSP_LCD_GLASS_Clear();
+
 	anchor = info_to_output;
 	switch (info_to_output)
 	{
 		case PWM:
 			if(duty_cycle >= 10)
 			{
-				dc_d = (uint8_t) duty_cycle / 10;
-				dc_u = (uint8_t) duty_cycle % 10;
-				dc_f = (uint8_t) (duty_cycle * 10) % 10;
+				dc_d = convert_digit_to_ascii((uint8_t) duty_cycle / 10);
+				dc_u = convert_digit_to_ascii((uint8_t) duty_cycle % 10);
+				dc_f = convert_digit_to_ascii((uint8_t) (duty_cycle * 10) % 10);
 			}
 			else
 			{
-				dc_u = (uint8_t) duty_cycle;
-				dc_f = (uint8_t) (duty_cycle * 10) % 10;
+				dc_d = convert_digit_to_ascii((uint8_t) duty_cycle / 10);
+				dc_u = convert_digit_to_ascii((uint8_t) duty_cycle);
+				dc_f = convert_digit_to_ascii((uint8_t) (duty_cycle * 10) % 10);
 			}
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[0]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[1]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[2]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_d), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &dc_f), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &dc_d, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &dc_u, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &dc_f, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayBar(LCD_BAR_0);
 			break;
 
 		case U_IN:
-			Uin_u = (uint8_t) Uin;
-			Uin_f1 = (uint8_t) (Uin_f1 * 10) % 10;
-			Uin_f2 = (uint8_t) (Uin_f2 * 100) % 10;
+			Uin_u = convert_digit_to_ascii((uint8_t) Uin);
+			Uin_f1 = convert_digit_to_ascii((uint8_t) (Uin * 10) % 10);
+			Uin_f2 = convert_digit_to_ascii((uint8_t) (Uin * 100) % 10);
 
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[4]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Uin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Uin_u, POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Uin_f1, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Uin_f2, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayBar(LCD_BAR_1);
 			break;
 
 		case I_IN:
-			Iin_u = (uint8_t) Iin;
-			Iin_f1 = (uint8_t) (Iin_f1 * 10) % 10;
-			Iin_f2 = (uint8_t) (Iin_f2 * 100) % 10;
+			Iin_u = convert_digit_to_ascii((uint8_t) Iin);
+			Iin_f1 = convert_digit_to_ascii((uint8_t) (Iin * 10) % 10);
+			Iin_f2 = convert_digit_to_ascii((uint8_t) (Iin * 100) % 10);
 
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[5]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[5]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Iin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Iin_u, POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Iin_f1, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Iin_f2, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayBar(LCD_BAR_2);
 			break;
 
 		case P_IN:
-			Pin_u = (uint8_t) Pin;
-			Pin_f1 = (uint8_t) (Pin_f1 * 10) % 10;
-			Pin_f2 = (uint8_t) (Pin_f2 * 100) % 10;
+			Pin_u = convert_digit_to_ascii((uint8_t) Pin);
+			Pin_f1 = convert_digit_to_ascii((uint8_t) (Pin * 10) % 10);
+			Pin_f2 = convert_digit_to_ascii((uint8_t) (Pin * 100) % 10);
 
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[6]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[6]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[7]), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_2);
 			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &letters[8]), POINT_ON, DOUBLEPOINT_ON, LCD_DIGIT_POSITION_3);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_u), POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_f1), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
-			BSP_LCD_GLASS_DisplayChar((uint8_t *) ((uint32_t) &Pin_f2), POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Pin_u, POINT_ON, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_4);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Pin_f1, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_5);
+			BSP_LCD_GLASS_DisplayChar((uint8_t *) &Pin_f2, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+			BSP_LCD_GLASS_DisplayBar(LCD_BAR_3);
 			break;
 
 		default:
 			break;
 	}
+}
+
+static char convert_digit_to_ascii(uint8_t dgt)
+{
+	char ascii = digits[dgt];
+	return ascii;
 }
 
 
@@ -507,26 +511,26 @@ static void MX_GPIO_Init(void)
   LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOC);
   LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
   LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
-  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOE);
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOC);
   LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOD);
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOE);
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE5);
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE2);
-  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE15);
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTE, LL_SYSCFG_EXTI_LINE15);
 
   /**/
-  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_5;
-  EXTI_InitStruct.Line_32_63 = LL_EXTI_LINE_NONE;
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_2;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
   EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
   LL_EXTI_Init(&EXTI_InitStruct);
 
-  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_2;
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_5;
+  EXTI_InitStruct.Line_32_63 = LL_EXTI_LINE_NONE;
   EXTI_InitStruct.LineCommand = ENABLE;
   EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
   EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
@@ -539,21 +543,21 @@ static void MX_GPIO_Init(void)
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /**/
-  LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_5, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_5, LL_GPIO_PULL_DOWN);
   LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_INPUT);
-  LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_15, LL_GPIO_PULL_NO);
-  LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_15, LL_GPIO_MODE_INPUT);
-  LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_2, LL_GPIO_PULL_NO);
+  LL_GPIO_SetPinPull(GPIOE, LL_GPIO_PIN_15, LL_GPIO_PULL_DOWN);
+  LL_GPIO_SetPinMode(GPIOE, LL_GPIO_PIN_15, LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_2, LL_GPIO_PULL_DOWN);
   LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_2, LL_GPIO_MODE_INPUT);
 
-  GPIOE-> MODER &= ~(GPIO_MODER_MODE8);	//	Zeroing mode register
-  GPIOE-> MODER |= (GPIO_MODER_MODE8_0);	// Setting desired mode of port
-  GPIOE-> OTYPER &= ~(GPIO_OTYPER_OT_8);	// Zeroing mode register
-  GPIOE-> OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR8);	//	Zeroing speed register
+  GPIOE-> MODER &= ~(GPIO_MODER_MODE8);										//	Zeroing mode register
+  GPIOE-> MODER |= (GPIO_MODER_MODE8_0);									// Setting desired mode of port
+  GPIOE-> OTYPER &= ~(GPIO_OTYPER_OT_8);									// Zeroing mode register
+  GPIOE-> OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR8);								//	Zeroing speed register
   GPIOE-> OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR8_0 | GPIO_OSPEEDER_OSPEEDR8_1);	// Setting desired speed of port`s clock cycles
-  GPIOE-> PUPDR &= ~(GPIO_PUPDR_PUPD8);	// Zeroing pull(up/down) register
+  GPIOE-> PUPDR &= ~(GPIO_PUPDR_PUPD8);										// Zeroing pull(up/down) register
 
-  GPIOE-> ODR &= ~(GPIO_ODR_OD8);	// Set "Off" desired pin of port
+  GPIOE-> ODR &= ~(GPIO_ODR_OD8);											// Set "Off" desired pin of port
 
   NVIC_SetPriority(EXTI2_IRQn, 0x00);
   NVIC_SetPriority(EXTI9_5_IRQn, 0x00);

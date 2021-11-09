@@ -163,14 +163,14 @@ void BSP_LCD_GLASS_Init(void)
 #elif defined (USE_STM32L476G_DISCO_REVA)
   LCDHandle.Init.Duty             = LCD_DUTY_1_8;
 #endif
-  LCDHandle.Init.Bias             = LCD_BIAS_1_3;
+  LCDHandle.Init.Bias             = LCD_BIAS_1_4;
   LCDHandle.Init.VoltageSource    = LCD_VOLTAGESOURCE_INTERNAL;
-  LCDHandle.Init.Contrast         = LCD_CONTRASTLEVEL_5;
+  LCDHandle.Init.Contrast         = LCD_CONTRASTLEVEL_2;
   LCDHandle.Init.DeadTime         = LCD_DEADTIME_0;
-  LCDHandle.Init.PulseOnDuration  = LCD_PULSEONDURATION_4;
+  LCDHandle.Init.PulseOnDuration  = LCD_PULSEONDURATION_7;
   LCDHandle.Init.HighDrive        = LCD_HIGHDRIVE_DISABLE;
   LCDHandle.Init.BlinkMode        = LCD_BLINKMODE_OFF;
-  LCDHandle.Init.BlinkFrequency   = LCD_BLINKFREQUENCY_DIV32;
+  LCDHandle.Init.BlinkFrequency   = LCD_BLINKFREQUENCY_DIV8;
   LCDHandle.Init.MuxSegment       = LCD_MUXSEGMENT_DISABLE;
 
   /* Initialize the LCD */
@@ -725,7 +725,7 @@ static void Convert(uint8_t *Char, Point_Typedef Point, DoublePoint_Typedef Colo
       ch = C_NMAP;
       break;
 
-    case 'µ' :
+    case 'ï¿½' :
       ch = C_UMAP;
       break;
 
@@ -741,7 +741,7 @@ static void Convert(uint8_t *Char, Point_Typedef Point, DoublePoint_Typedef Colo
       ch = C_SLATCH;
       break;
 
-    case '°' :
+    case 'ï¿½' :
       ch = C_PERCENT_1;
       break;
     case '%' :
