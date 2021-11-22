@@ -741,9 +741,9 @@ static void Convert(uint8_t *Char, Point_Typedef Point, DoublePoint_Typedef Colo
       ch = C_SLATCH;
       break;
 
-    case '�' :
-      ch = C_PERCENT_1;
-      break;
+//    case '�' :
+//      ch = C_PERCENT_1;
+//      break;
     case '%' :
       ch = C_PERCENT_2;
       break;

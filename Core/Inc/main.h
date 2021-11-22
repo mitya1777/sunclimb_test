@@ -22,6 +22,9 @@ extern "C" {
 #include "stm32l476g_discovery_glass_lcd.h"
 
 
+void interrupts_handling(uint8_t);
+
+
 struct Flags {
 	uint8_t DMA_ADC_f,
 			LCD_f,
@@ -37,12 +40,12 @@ void Error_Handler(void);
 
 #define UP 			0x01
 #define DOWN 		0x02
-#define RIGHT 		0x03
+#define RIGHT 		0x04
 
-#define PWM			0x04
-#define U_IN		0x05
-#define I_IN		0x06
-#define P_IN		0x07
+#define PWM			0x05
+#define U_IN		0x06
+#define I_IN		0x07
+#define P_IN		0x08
 
 
 

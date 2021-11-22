@@ -6,6 +6,9 @@
 #endif
 
 
+#define EXPIRED_JERKING				30
+
+
 void NMI_Handler(void);
 void HardFault_Handler(void);
 void MemManage_Handler(void);
@@ -19,6 +22,8 @@ void DMA1_Channel1_IRQHandler(void);
 void EXTI2_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
 void EXTI15_10_IRQHandler(void);
+void TIM7_IRQHandler(void);
+
 
 
 #ifdef __cplusplus
