@@ -29,10 +29,10 @@ static char Pin_u, Pin_f1, Pin_f2 = RESET;
 static uint8_t anchor = RESET;
 
 
-char letters[9] = {'P', 'W', 'M', '8', 'U', 'I', 'P', 'i', 'n'};
-char digits[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+char letters[9] = "PWM8UIPin";
+char digits[10] = "0123456789";
 
-static uint8_t button_up, button_down = RESET;
+//static uint8_t button_up, button_down = RESET;
 static uint8_t button_right = 0x04;
 
 int main(void)	{
@@ -114,8 +114,8 @@ int main(void)	{
 
 
 static void calculaion(void)	{
-	Uin = 3.0 * DMA_ADC_buffer[0]/4096;
-	U2 = 3.0 * DMA_ADC_buffer[1]/4096;
+	Uin = 3.0 * DMA_ADC_buffer[0] / 4096;
+	U2 = 3.0 * DMA_ADC_buffer[1] / 4096;
 	Iin = (Uin - U2) / Rsh;
 	Pin = Uin * Iin;
 }
