@@ -105,9 +105,9 @@ int main(void)	{
 				Systems_f.Joystick_f &= !RIGHT;
 				break;
 
-			default:
-				Systems_f.Joystick_f = RESET;
-				break;
+//			default:
+//				Systems_f.Joystick_f = RESET;
+//				break;
 		}
 	}
 }
@@ -420,8 +420,8 @@ static void MX_TIM1_Init(void)	{
 static void TIM6_init(void)	{
 	RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM6EN;
 	TIM6 -> CR1 |= TIM_CR1_ARPE;
-	TIM6 -> PSC |= (10000 << TIM_PSC_PSC_Pos);
-	TIM6 -> ARR |= (1000  << TIM_ARR_ARR_Pos);
+	TIM6 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
+	TIM6 -> ARR = 999;
 	TIM6 -> CNT |= (1     << TIM_CNT_CNT_Pos);
 	TIM6 -> CR2 |= TIM_CR2_MMS2_1;
 }
@@ -429,11 +429,14 @@ static void TIM6_init(void)	{
 
 static void TIM7_init(void)	{
 	RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
-//	TIM7 -> CR1 |= TIM_CR1_ARPE;
-	TIM7 -> PSC |= (10000 << TIM_PSC_PSC_Pos);
-//	TIM7 -> ARR |= (1000  << TIM_ARR_ARR_Pos);
+	TIM7 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
+//	TIM7 -> ARR = 0x00;
 	TIM7 -> CNT |= (1     << TIM_CNT_CNT_Pos);
+	TIM7 -> CR1 &= ~TIM_CR1_ARPE;
 	TIM7 -> DIER |= TIM_DIER_UIE;
+
+	NVIC_SetPriority(TIM7_IRQn, 0x00);
+	NVIC_EnableIRQ(TIM7_IRQn);
 }
 
 
