@@ -6,7 +6,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 //static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_TIM1_Init(void);
+//static void MX_TIM1_Init(void);
+static void TIM1_Init(void);
 static void TIM6_init(void);
 static void TIM7_init(void);
 static void DMA_init(void);
@@ -18,7 +19,7 @@ static char convert_digit_to_ascii (uint8_t);
 struct Flags Systems_f = {RESET};
 static uint16_t DMA_ADC_buffer[2] = {RESET};
 static float Uin, U2, Iin, Pin = RESET;
-static float Rsh = 0.1;
+static float Rsh = 0.01;
 
 static float duty_cycle = RESET;
 static char dc_d, dc_u, dc_f = RESET;
@@ -44,7 +45,8 @@ int main(void)	{
 	BSP_LCD_GLASS_Init();
 	//MX_DMA_Init();
 	MX_ADC1_Init();
-	MX_TIM1_Init();
+//	MX_TIM1_Init();
+	TIM1_Init();
 	TIM6_init();
 	TIM7_init();
 
@@ -70,6 +72,7 @@ int main(void)	{
 				}
 
 				TIM1 -> CCR2 = duty_cycle * 4;
+				TIM1 -> EGR |= TIM_EGR_UG;
 
 				if(button_right == PWM)	{
 					LCD_depiction(PWM);
@@ -86,6 +89,7 @@ int main(void)	{
 				}
 
 				TIM1 -> CCR2 = duty_cycle * 4;
+				TIM1 -> EGR |= TIM_EGR_UG;
 
 				if(button_right == PWM)	{
 					LCD_depiction(PWM);
@@ -114,8 +118,7 @@ int main(void)	{
 
 
 static void calculaion(void)	{
-	Uin = 3.0 * DMA_ADC_buffer[0] / 4096;
-	U2 = 3.0 * DMA_ADC_buffer[1] / 4096;
+	Uin = 3.0 * DMA_ADC_buffer[0] / 4095;
 	Iin = (Uin - U2) / Rsh;
 	Pin = Uin * Iin;
 }
@@ -255,7 +258,7 @@ void SystemClock_Config(void)	{
 	LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
 	LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
 	LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
-	LL_SetSystemCoreClock(20000000);
+	LL_SetSystemCoreClock(40000000);
 
 	/* Update the time base */
 	if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)	{
@@ -356,65 +359,104 @@ static void MX_ADC1_Init(void)	{
   * @param None
   * @retval None
   */
-static void MX_TIM1_Init(void)	{
-	LL_TIM_InitTypeDef TIM_InitStruct = {0};
-	LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = {0};
-	LL_TIM_BDTR_InitTypeDef TIM_BDTRInitStruct = {0};
+//static void MX_TIM1_Init(void)	{
+//	LL_TIM_InitTypeDef TIM_InitStruct = {0};
+//	LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = {0};
+//	LL_TIM_BDTR_InitTypeDef TIM_BDTRInitStruct = {0};
+//	LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+//
+//	/* Peripheral clock enable */
+//	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
+//
+//	TIM_InitStruct.Prescaler = 0;
+//	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+//	TIM_InitStruct.Autoreload = 400;
+//	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+//	TIM_InitStruct.RepetitionCounter = 0;
+//	LL_TIM_Init(TIM1, &TIM_InitStruct);
+//	LL_TIM_DisableARRPreload(TIM1);
+//	LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
+//	LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH2);
+//	TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
+//	TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
+//	TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
+//	TIM_OC_InitStruct.CompareValue = 4;
+//	TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
+//	TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
+//	TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
+//	TIM_OC_InitStruct.OCNIdleState = LL_TIM_OCIDLESTATE_LOW;
+//	LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
+//	LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH2);
+//	LL_TIM_SetOCRefClearInputSource(TIM1, LL_TIM_OCREF_CLR_INT_NC);
+//	LL_TIM_DisableExternalClock(TIM1);
+//	LL_TIM_ConfigETR(TIM1, LL_TIM_ETR_POLARITY_NONINVERTED, LL_TIM_ETR_PRESCALER_DIV1, LL_TIM_ETR_FILTER_FDIV1);
+//	LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
+//	LL_TIM_SetTriggerOutput2(TIM1, LL_TIM_TRGO2_RESET);
+//	LL_TIM_DisableMasterSlaveMode(TIM1);
+//	TIM_BDTRInitStruct.OSSRState = LL_TIM_OSSR_DISABLE;
+//	TIM_BDTRInitStruct.OSSIState = LL_TIM_OSSI_DISABLE;
+//	TIM_BDTRInitStruct.LockLevel = LL_TIM_LOCKLEVEL_OFF;
+//	TIM_BDTRInitStruct.DeadTime = 0;
+//	TIM_BDTRInitStruct.BreakState = LL_TIM_BREAK_DISABLE;
+//	TIM_BDTRInitStruct.BreakPolarity = LL_TIM_BREAK_POLARITY_HIGH;
+//	TIM_BDTRInitStruct.BreakFilter = LL_TIM_BREAK_FILTER_FDIV1;
+//	TIM_BDTRInitStruct.Break2State = LL_TIM_BREAK2_DISABLE;
+//	TIM_BDTRInitStruct.Break2Polarity = LL_TIM_BREAK2_POLARITY_HIGH;
+//	TIM_BDTRInitStruct.Break2Filter = LL_TIM_BREAK2_FILTER_FDIV1;
+//	TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
+//	LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
+//	LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOE);
+//
+//	/**TIM1 GPIO Configuration
+//	PE11   ------> TIM1_CH2
+//	*/
+//	GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
+//	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+//	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+//	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+//	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+//	GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
+//	LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+//}
+
+
+static void TIM1_Init(void)
+{
 	LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-	/* Peripheral clock enable */
 	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
 
-	TIM_InitStruct.Prescaler = 0;
-	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-	TIM_InitStruct.Autoreload = 400;
-	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-	TIM_InitStruct.RepetitionCounter = 0;
-	LL_TIM_Init(TIM1, &TIM_InitStruct);
-	LL_TIM_DisableARRPreload(TIM1);
-	LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
-	LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH2);
-	TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
-	TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
-	TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-	TIM_OC_InitStruct.CompareValue = 4;
-	TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
-	TIM_OC_InitStruct.OCNPolarity = LL_TIM_OCPOLARITY_HIGH;
-	TIM_OC_InitStruct.OCIdleState = LL_TIM_OCIDLESTATE_LOW;
-	TIM_OC_InitStruct.OCNIdleState = LL_TIM_OCIDLESTATE_LOW;
-	LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
-	LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH2);
-	LL_TIM_SetOCRefClearInputSource(TIM1, LL_TIM_OCREF_CLR_INT_NC);
-	LL_TIM_DisableExternalClock(TIM1);
-	LL_TIM_ConfigETR(TIM1, LL_TIM_ETR_POLARITY_NONINVERTED, LL_TIM_ETR_PRESCALER_DIV1, LL_TIM_ETR_FILTER_FDIV1);
-	LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
-	LL_TIM_SetTriggerOutput2(TIM1, LL_TIM_TRGO2_RESET);
-	LL_TIM_DisableMasterSlaveMode(TIM1);
-	TIM_BDTRInitStruct.OSSRState = LL_TIM_OSSR_DISABLE;
-	TIM_BDTRInitStruct.OSSIState = LL_TIM_OSSI_DISABLE;
-	TIM_BDTRInitStruct.LockLevel = LL_TIM_LOCKLEVEL_OFF;
-	TIM_BDTRInitStruct.DeadTime = 0;
-	TIM_BDTRInitStruct.BreakState = LL_TIM_BREAK_DISABLE;
-	TIM_BDTRInitStruct.BreakPolarity = LL_TIM_BREAK_POLARITY_HIGH;
-	TIM_BDTRInitStruct.BreakFilter = LL_TIM_BREAK_FILTER_FDIV1;
-	TIM_BDTRInitStruct.Break2State = LL_TIM_BREAK2_DISABLE;
-	TIM_BDTRInitStruct.Break2Polarity = LL_TIM_BREAK2_POLARITY_HIGH;
-	TIM_BDTRInitStruct.Break2Filter = LL_TIM_BREAK2_FILTER_FDIV1;
-	TIM_BDTRInitStruct.AutomaticOutput = LL_TIM_AUTOMATICOUTPUT_DISABLE;
-	LL_TIM_BDTR_Init(TIM1, &TIM_BDTRInitStruct);
 	LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOE);
-
 	/**TIM1 GPIO Configuration
 	PE11   ------> TIM1_CH2
 	*/
 	GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
 	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
 	LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+	TIM1 -> ARR = 400;
+	TIM1 -> CCR2 = 4;
+
+	TIM1 -> CR1 &= ~TIM_CR1_ARPE;											//	auto reload preload register disable
+	TIM1 -> CR1 &= ~TIM_CR1_CMS;											//	aligned mode selection
+	TIM1 -> CR1 &= ~TIM_CR1_DIR;											//	counter used as upcounter
+
+	TIM1 -> CCMR1 &= ~TIM_CCMR1_CC2S;										//	channel 2 output definition
+	TIM1 -> CCMR1 |= (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2);					//	channel 2 PWM 1 mode
+	TIM1 -> CCMR1 &= ~TIM_CCMR1_OC2PE;										//	output compare 2 preload disable
+	TIM1 -> CCMR1 |= TIM_CCMR1_OC2FE;										//	output compare 2 fast enable
+	TIM1 -> CCER |= TIM_CCER_CC2E;											//	OC2 signal is output on the corresponding bit
+	TIM1 -> BDTR |= TIM_BDTR_MOE;											//	main output enable
+
+//	TIM1 -> DIER |= TIM_DIER_UIE;
+
+	TIM1 -> CR1 |= TIM_CR1_CEN;												//	counter enable
 }
+
 
 
 static void TIM6_init(void)	{
@@ -429,14 +471,16 @@ static void TIM6_init(void)	{
 
 static void TIM7_init(void)	{
 	RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
+	TIM7 -> CR1 |= TIM_CR1_ARPE;
 	TIM7 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
-//	TIM7 -> ARR = 0x00;
-	TIM7 -> CNT |= (1     << TIM_CNT_CNT_Pos);
-	TIM7 -> CR1 &= ~TIM_CR1_ARPE;
+	TIM7 -> ARR = 999;
+	TIM7 -> CNT |= (1    << TIM_CNT_CNT_Pos);
 	TIM7 -> DIER |= TIM_DIER_UIE;
 
 	NVIC_SetPriority(TIM7_IRQn, 0x00);
 	NVIC_EnableIRQ(TIM7_IRQn);
+
+	TIM7 -> CR1 |= TIM_CR1_CEN;
 }
 
 

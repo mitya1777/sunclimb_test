@@ -9,7 +9,7 @@ static uint8_t jerking_time = RESET;
 
 void DMA1_Channel1_IRQHandler(void)	{
 	Systems_f.DMA_ADC_f = SET;
-	GPIOE-> ODR ^= (GPIO_ODR_OD8);
+//	GPIOE-> ODR ^= (GPIO_ODR_OD8);
 	DMA1 -> IFCR |= DMA_IFCR_CTCIF1;
 }
 
@@ -50,7 +50,8 @@ void TIM7_IRQHandler(void)	{
 		jerking_time = RESET;
 		TIM6 -> CR1 &= ~TIM_CR1_CEN;
 	}
-		TIM7 -> SR &= ~TIM_SR_UIF;
+	GPIOE-> ODR ^= (GPIO_ODR_OD8);
+	TIM7 -> SR &= ~TIM_SR_UIF;
 }
 
 void NMI_Handler(void)	{
