@@ -29,17 +29,11 @@ void EXTI9_5_IRQHandler(void)	{
 	}
 }
 
-void EXTI15_10_IRQHandler(void)	{
-	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15))	{
+void EXTI3_IRQHandler(void)	{
+	if(LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_3))	{
 		interrupts_handling(RESET);
 		Systems_f.Joystick_f = UP;
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
-	}
-	else	{
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_10);
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_11);
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_12);
-		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
 	}
 }
 
