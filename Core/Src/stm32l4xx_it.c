@@ -42,7 +42,7 @@ void TIM7_IRQHandler(void)	{
 	if(jerking_time >= EXPIRED_JERKING)	{
 		interrupts_handling(SET);
 		jerking_time = RESET;
-		TIM6 -> CR1 &= ~TIM_CR1_CEN;
+		TIM6 -> CR1 &= ~TIM_CR1_CEN;									//	???
 	}
 	GPIOE-> ODR ^= (GPIO_ODR_OD8);
 	TIM7 -> SR &= ~TIM_SR_UIF;

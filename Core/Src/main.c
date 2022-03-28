@@ -294,14 +294,14 @@ static void MX_ADC1_Init(void)	{
 	LL_GPIO_EnablePinAnalogControl(GPIOA, LL_GPIO_PIN_0|LL_GPIO_PIN_1);
 
 	/* ADC1 Init */
-	LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_1, LL_DMA_REQUEST_0);
-	LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-	LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_LOW);
-	LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_CIRCULAR);
-	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PERIPH_NOINCREMENT);
-	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_INCREMENT);
-	LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_HALFWORD);
-	LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_HALFWORD);
+//	LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_1, LL_DMA_REQUEST_0);
+//	LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+//	LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_LOW);
+//	LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_CIRCULAR);
+//	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PERIPH_NOINCREMENT);
+//	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_INCREMENT);
+//	LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_HALFWORD);
+//	LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_HALFWORD);
 
 	/** Common config
 	*/
@@ -313,7 +313,7 @@ static void MX_ADC1_Init(void)	{
 	ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
 	ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
 	ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
-//	ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
+	ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
 	ADC_REG_InitStruct.Overrun = LL_ADC_REG_OVR_DATA_PRESERVED;
 	LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
 	ADC_CommonInitStruct.CommonClock = LL_ADC_CLOCK_ASYNC_DIV8;
@@ -473,11 +473,11 @@ static void TIM7_init(void)	{
 	RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
 	TIM7 -> CR1 |= TIM_CR1_ARPE;
 	TIM7 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
-	TIM7 -> ARR = 999;
+	TIM7 -> ARR = 2;
 	TIM7 -> CNT |= (1    << TIM_CNT_CNT_Pos);
 	TIM7 -> DIER |= TIM_DIER_UIE;
 
-	NVIC_SetPriority(TIM7_IRQn, 0x00);
+	NVIC_SetPriority(TIM7_IRQn, 0x0E);
 	NVIC_EnableIRQ(TIM7_IRQn);
 
 	TIM7 -> CR1 |= TIM_CR1_CEN;
@@ -520,6 +520,9 @@ static void DMA_init(void)	{
 	DMA1_Channel1 -> CCR |= DMA_CCR_CIRC;									//	circular mode configuration
 	DMA1_Channel1 -> CCR |= DMA_CCR_TCIE;									//	transfer complete interrupt enable
 	DMA1_Channel1 -> CCR |= DMA_CCR_EN;
+
+	NVIC_SetPriority(DMA1_Channel1_IRQn, 0x0D);
+	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
 
 
@@ -580,9 +583,9 @@ static void MX_GPIO_Init(void)	{
 
 	GPIOE-> ODR &= ~(GPIO_ODR_OD8);											// Set "Off" desired pin of port
 
-	NVIC_SetPriority(EXTI2_IRQn, 0x00);
-	NVIC_SetPriority(EXTI3_IRQn, 0x00);
-	NVIC_SetPriority(EXTI9_5_IRQn, 0x00);
+	NVIC_SetPriority(EXTI2_IRQn, 0x0F);
+	NVIC_SetPriority(EXTI3_IRQn, 0x0F);
+	NVIC_SetPriority(EXTI9_5_IRQn, 0x0F);
 	NVIC_EnableIRQ(EXTI2_IRQn);
 	NVIC_EnableIRQ(EXTI3_IRQn);
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
