@@ -71,7 +71,7 @@ int main(void)	{
 					duty_cycle = 99.75;
 				}
 
-				TIM1 -> CCR2 = duty_cycle * 4;
+				TIM1 -> CCR2 = duty_cycle * 8;
 				TIM1 -> EGR |= TIM_EGR_UG;
 
 				if(button_right == PWM)	{
@@ -208,13 +208,13 @@ void interrupts_handling(uint8_t intrpt_setting)
 	switch(intrpt_setting)	{
 		case SET:
 			NVIC_EnableIRQ(EXTI2_IRQn);
+			NVIC_EnableIRQ(EXTI3_IRQn);
 			NVIC_EnableIRQ(EXTI9_5_IRQn);
-			NVIC_EnableIRQ(EXTI15_10_IRQn);
 			break;
 		case RESET:
 			NVIC_DisableIRQ(EXTI2_IRQn);
+			NVIC_EnableIRQ(EXTI3_IRQn);
 			NVIC_DisableIRQ(EXTI9_5_IRQn);
-			NVIC_DisableIRQ(EXTI15_10_IRQn);
 	}
 }
 
@@ -311,7 +311,7 @@ static void MX_ADC1_Init(void)	{
 	LL_ADC_Init(ADC1, &ADC_InitStruct);
 	ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_EXT_TIM6_TRGO;
 	ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
-	ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
+	ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_2RANKS;
 	ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
 	ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
 	ADC_REG_InitStruct.Overrun = LL_ADC_REG_OVR_DATA_PRESERVED;
@@ -438,7 +438,7 @@ static void TIM1_Init(void)
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
 	LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-	TIM1 -> ARR = 400;
+	TIM1 -> ARR = 799;
 	TIM1 -> CCR2 = 4;
 
 	TIM1 -> CR1 &= ~TIM_CR1_ARPE;											//	auto reload preload register disable
@@ -465,7 +465,7 @@ static void TIM6_init(void)	{
 	TIM6 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
 	TIM6 -> ARR = 999;
 	TIM6 -> CNT |= (1     << TIM_CNT_CNT_Pos);
-	TIM6 -> CR2 |= TIM_CR2_MMS2_1;
+	TIM6 -> CR2 |= TIM_CR2_MMS_1;
 }
 
 
@@ -473,14 +473,14 @@ static void TIM7_init(void)	{
 	RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM7EN;
 	TIM7 -> CR1 |= TIM_CR1_ARPE;
 	TIM7 -> PSC |= (9999 << TIM_PSC_PSC_Pos);
-	TIM7 -> ARR = 2;
+	TIM7 -> ARR = 4;
 	TIM7 -> CNT |= (1    << TIM_CNT_CNT_Pos);
 	TIM7 -> DIER |= TIM_DIER_UIE;
 
 	NVIC_SetPriority(TIM7_IRQn, 0x0E);
 	NVIC_EnableIRQ(TIM7_IRQn);
 
-	TIM7 -> CR1 |= TIM_CR1_CEN;
+	//TIM7 -> CR1 |= TIM_CR1_CEN;
 }
 
 
